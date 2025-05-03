@@ -8,7 +8,7 @@ from app import app, db, mail
 from models import User, Scan
 from forms import LoginForm, RegisterForm, URLScanForm
 from utils.scraper import scrape_url_content
-from utils.model import detect_threat, get_threat_details
+from utils.distilbert_model import detect_threat, get_threat_details
 from utils.report import generate_pdf_report, send_report_email
 from datetime import datetime, timedelta
 from flask_mail import Message
