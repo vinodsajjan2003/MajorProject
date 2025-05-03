@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Dark Web Threat Detector{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5">Welcome, {{ current_user.username }}</h1>
+        <p class="lead">Monitor and analyze dark web threats from your personalized dashboard.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Quick Statistics Cards -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card dashboard-card bg-dark stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted">Total Scans</h6>
+                        <h2 class="fw-bold mb-0">{{ scan_count }}</h2>
+                    </div>
+                    <div class="dashboard-icon text-primary">
+                        <i class="bi bi-search"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-warning);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted">Active Threats</h6>
+                        <h2 class="fw-bold mb-0">{{ threat_distribution|length }}</h2>
+                    </div>
+                    <div class="dashboard-icon text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-danger);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted">High Severity</h6>
+                        <h2 class="fw-bold mb-0">
+                            {{ severity_distribution.get('High', 0) }}
+                        </h2>
+                    </div>
+                    <div class="dashboard-icon text-danger">
+                        <i class="bi bi-shield-x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-success);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase text-muted">Today's Scans</h6>
+                        <h2 class="fw-bold mb-0">
+                            {% set today_count = 0 %}
+                            {% for scan in recent_scans %}
+                                {% if scan.created_at.date() == now().date() %}
+                                    {% set today_count = today_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ today_count }}
+                        </h2>
+                    </div>
+                    <div class="dashboard-icon text-success">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Quick Access Button -->
+    <div class="col-12 text-center mb-4">
+        <a href="{{ url_for('scan') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-search me-2"></i> Scan New URL
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Charts -->
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card bg-dark h-100">
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="threatTypeChart"></canvas>
+                </div>
+                <!-- Hidden data for charts -->
+                <div id="threat-distribution-data" class="d-none">
+                    {{ threat_distribution|tojson }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card bg-dark h-100">
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+                <!-- Hidden data for charts -->
+                <div id="severity-distribution-data" class="d-none">
+                    {{ severity_distribution|tojson }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Scans Table -->
+    <div class="col-12">
+        <div class="card dashboard-card bg-dark">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Scans</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_scans %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-dark">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Threat Type</th>
+                                <th>Severity</th>
+                                <th>Confidence</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for scan in recent_scans %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 200px;">{{ scan.url }}</td>
+                                <td>{{ scan.threat_type }}</td>
+                                <td><span class="badge severity-badge">{{ scan.severity }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">{{ "%.2f"|format(scan.confidence_score) }}</span>
+                                        <div class="confidence-meter flex-grow-1">
+                                            <div class="confidence-fill" data-score="{{ scan.confidence_score }}"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ scan.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('report', scan_id=scan.id) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-file-earmark-text"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-search display-4 mb-3 text-muted"></i>
+                    <p class="lead">No scans yet.</p>
+                    <p class="text-muted">Start by scanning a dark web URL to detect potential threats.</p>
+                    <a href="{{ url_for('scan') }}" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i> Scan URL
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Banner with Cybersecurity Image -->
+    <div class="col-12">
+        <div class="card bg-dark border-0 rounded-3 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1501428291079-b42d45fc7455" class="card-img" alt="Cybersecurity Dashboard">
+            <div class="card-img-overlay d-flex flex-column justify-content-end" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                <h3 class="card-title">Protect Your Organization</h3>
+                <p class="card-text">Our advanced threat detection system helps you identify and mitigate dark web threats.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+{% endblock %}

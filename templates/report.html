@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Threat Report - Dark Web Threat Detector{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Threat Report</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="report-container">
+    <div class="report-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-6 mb-2">Threat Detection Report</h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-clock me-1"></i> {{ scan.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('download_report', scan_id=scan.id) }}" class="btn btn-outline-primary action-button">
+                        <i class="bi bi-download me-2"></i> Download PDF
+                    </a>
+                    <a href="{{ url_for('email_report', scan_id=scan.id) }}" class="btn btn-outline-info action-button" id="email-report-btn">
+                        <i class="bi bi-envelope me-2"></i> Email Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">URL Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Scanned URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ scan.url }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ scan.url }}')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Scan Date</label>
+                        <input type="text" class="form-control" value="{{ scan.created_at.strftime('%Y-%m-%d %H:%M:%S') }}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card bg-dark h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Threat Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Threat Type</label>
+                            <input type="text" class="form-control fw-bold" value="{{ scan.threat_type }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Severity</label>
+                            <input type="text" class="form-control fw-bold {% if scan.severity == 'High' %}text-danger{% elif scan.severity == 'Medium' %}text-warning{% else %}text-info{% endif %}" 
+                                   value="{{ scan.severity }}" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Confidence Score</label>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2 fw-bold">{{ "%.2f"|format(scan.confidence_score) }}</span>
+                            <div class="confidence-meter flex-grow-1">
+                                <div class="confidence-fill" data-score="{{ scan.confidence_score }}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0">Recommendation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert {% if scan.severity == 'High' %}alert-danger{% elif scan.severity == 'Medium' %}alert-warning{% else %}alert-info{% endif %}">
+                        <i class="bi bi-shield-exclamation me-2"></i>
+                        {{ scan.recommendation }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Content Sample</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ scan.content }}')">
+                        <i class="bi bi-clipboard me-1"></i> Copy Content
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="report-content">
+                        {{ scan.content }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-dark border-0 rounded-3 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1524114051012-0a2aa8dae4e1" class="card-img" alt="Threat Detection Dashboard">
+            <div class="card-img-overlay d-flex flex-column justify-content-end" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                <h3 class="card-title">Stay Protected</h3>
+                <p class="card-text">Our threat detection reports help you understand and mitigate cybersecurity risks from the dark web.</p>
+                <a href="{{ url_for('scan') }}" class="btn btn-primary">Scan Another URL</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

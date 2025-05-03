@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Scan URL - Dark Web Threat Detector{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-5">Dark Web URL Scanner</h1>
+        <p class="lead">Input a dark web URL to detect potential threats and vulnerabilities.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card bg-dark mb-4">
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-5">
+                        <img src="https://images.unsplash.com/photo-1591290619618-904f6dd935e3" class="img-fluid rounded-start h-100" alt="Cybersecurity" style="object-fit: cover;">
+                    </div>
+                    <div class="col-md-7">
+                        <div class="url-input-container">
+                            <form method="POST" action="{{ url_for('scan') }}" id="scan-form">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="mb-4">
+                                    <label for="url" class="form-label">{{ form.url.label }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark">
+                                            <i class="bi bi-globe"></i>
+                                        </span>
+                                        {{ form.url(class="form-control", placeholder="Enter a dark web URL (e.g., http://example.onion)") }}
+                                    </div>
+                                    {% for error in form.url.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i> 
+                                        URLs will be analyzed using our threat detection model.
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>Important:</strong> Scanning may take up to 30 seconds depending on the URL's accessibility.
+                                </div>
+                                
+                                <div class="d-grid">
+                                    {{ form.submit(class="btn btn-primary btn-lg", id="scan-button") }}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-dark h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-shield-check text-primary display-4 mb-3"></i>
+                <h5 class="card-title">Enhanced Protection</h5>
+                <p class="card-text">Our advanced model detects multiple types of threats including malware, phishing, and fraud.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card bg-dark h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-clock-history text-primary display-4 mb-3"></i>
+                <h5 class="card-title">Real-time Analysis</h5>
+                <p class="card-text">Scan and analyze dark web content in real-time with our high-performance system.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card bg-dark h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-text text-primary display-4 mb-3"></i>
+                <h5 class="card-title">Detailed Reports</h5>
+                <p class="card-text">Receive comprehensive reports with actionable recommendations for each threat.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card bg-dark">
+            <div class="card-header">
+                <h5 class="mb-0">Scanning Process</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-1-circle-fill me-2 text-primary"></i> URL Analysis</h6>
+                        <p>We first extract the content from the provided dark web URL using secure scraping methods.</p>
+                        
+                        <h6><i class="bi bi-2-circle-fill me-2 text-primary"></i> Content Extraction</h6>
+                        <p>Important text content is parsed and prepared for our machine learning model to analyze.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-3-circle-fill me-2 text-primary"></i> Threat Detection</h6>
+                        <p>Our DistilBERT model analyzes the content to identify potential threat categories.</p>
+                        
+                        <h6><i class="bi bi-4-circle-fill me-2 text-primary"></i> Report Generation</h6>
+                        <p>We generate a detailed report with severity levels and actionable recommendations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
