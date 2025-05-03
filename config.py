@@ -22,8 +22,8 @@ class Config:
     
     # Model paths
     MODEL_DIR = 'models'
-    MODEL_PATH = os.path.join(MODEL_DIR, 'distilbert_threat_model')
-    TOKENIZER_PATH = os.path.join(MODEL_DIR, 'distilbert_tokenizer')
+    MODEL_PATH = os.path.join(MODEL_DIR, 'threat_model.joblib')
+    CATEGORIES_PATH = os.path.join(MODEL_DIR, 'threat_categories.joblib')
     
     # Tor proxy configuration
     TOR_PROXY = {
