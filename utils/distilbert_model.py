@@ -3,9 +3,17 @@ import logging
 import re
 from app import app
 import pandas as pd
+import numpy as np
+import traceback
 
 # Global variables
 synthetic_data = None
+st_model = None
+label_embeddings = None
+
+# Define candidate threat labels based on mid.py
+CANDIDATE_LABELS = ["Malware", "Phishing", "Ransomware", "Carding", "Exploit", "Fraud", 
+                    "Hacking Services", "Scam", "Trojan", "Spyware", "DDoS", "SQL Injection"]
 
 def clean_text(text):
     """Clean text data for model prediction"""
@@ -28,10 +36,28 @@ def clean_text(text):
     return text
 
 def load_model():
-    """Load synthetic threat data for detailed information"""
-    global synthetic_data
+    """Load model and synthetic threat data for detailed information"""
+    global synthetic_data, st_model, label_embeddings
     
     success = True
+    
+    # Try to load sentence-transformers if available
+    try:
+        from sentence_transformers import SentenceTransformer, util
+        import torch
+        logging.info("Attempting to initialize SentenceTransformer...")
+        
+        # Load the model - use CPU as device instead of CUDA 
+        st_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+        
+        # Generate embeddings for candidate labels
+        label_embeddings = st_model.encode(CANDIDATE_LABELS, convert_to_tensor=True)
+        
+        logging.info("SentenceTransformer initialized successfully")
+    except Exception as e:
+        logging.warning(f"Could not initialize SentenceTransformer: {str(e)}")
+        st_model = None
+        label_embeddings = None
     
     # Load synthetic threat data
     try:
@@ -52,8 +78,9 @@ def load_model():
 
 def detect_threat(content):
     """
-    Detect threats using the embedded zero-shot classification approach
-    based on the method from mid.py
+    Detect threats using sentence transformers if available, 
+    with fallback to keyword-based detection.
+    Based on the method from mid.py.
     
     Args:
         content (str): The text content to analyze
@@ -61,14 +88,38 @@ def detect_threat(content):
     Returns:
         str: The detected threat type
     """
-    # Define candidate threat labels
-    candidate_labels = ["Malware", "Phishing", "Fraud", "Carding", "Exploit", "Ransomware"]
+    global st_model, label_embeddings
     
     # Clean the content
     cleaned_content = clean_text(content)
     
     try:
-        # Use keyword-based approach similar to the mid.py logic
+        # First try using SentenceTransformer if available (like in mid.py)
+        if st_model is not None and label_embeddings is not None:
+            try:
+                from sentence_transformers import util
+                import torch
+                
+                # Generate embedding for the content
+                content_embedding = st_model.encode(cleaned_content, convert_to_tensor=True)
+                
+                # Calculate cosine similarity with label embeddings
+                cos_scores = util.cos_sim(content_embedding, label_embeddings)
+                
+                # Get the best matching label
+                best_label_idx = cos_scores.argmax()
+                
+                # Return the detected threat type
+                detected_threat = CANDIDATE_LABELS[best_label_idx]
+                logging.info(f"SentenceTransformer detected threat type: {detected_threat}")
+                return detected_threat
+            
+            except Exception as e:
+                logging.warning(f"SentenceTransformer detection failed: {str(e)}")
+                logging.warning(traceback.format_exc())
+        
+        # If SentenceTransformer is not available or failed, use keyword-based approach
+        logging.info("Using keyword-based threat detection")
         content_lower = cleaned_content.lower()
         
         # Define keyword mappings for each threat type
@@ -78,7 +129,12 @@ def detect_threat(content):
             'Ransomware': ['ransom', 'encrypt', 'bitcoin', 'payment', 'decrypt', 'crypto', 'lock', 'files'],
             'Carding': ['card', 'credit card', 'cvv', 'dump', 'fullz', 'bank account', 'pin', 'atm', 'stripe'],
             'Exploit': ['exploit', 'vulnerability', 'cve', 'sql', 'injection', 'zero-day', 'buffer overflow', 'privilege escalation'],
-            'Fraud': ['fraud', 'fake', 'counterfeit', 'scam', 'scheme', 'trick', 'identity theft', 'social security']
+            'Fraud': ['fraud', 'fake', 'counterfeit', 'scam', 'scheme', 'trick', 'identity theft', 'social security'],
+            'Hacking Services': ['hack', 'crack', 'bruteforce', 'service', 'hacker', 'ddos', 'attack', 'target'],
+            'Trojan': ['trojan', 'backdoor', 'keylogger', 'steal', 'remote access', 'control'],
+            'Spyware': ['spy', 'monitor', 'surveillance', 'track', 'record', 'watch', 'activity'],
+            'DDoS': ['ddos', 'denial of service', 'flood', 'attack', 'bandwidth', 'botnet'],
+            'SQL Injection': ['sql', 'injection', 'database', 'query', 'parameter']
         }
         
         # Calculate a score for each threat type based on keyword matches
@@ -95,7 +151,9 @@ def detect_threat(content):
         if max_score > 0:
             # Get all threat types with the max score
             max_threats = [threat for threat, score in threat_scores.items() if score == max_score]
-            return max_threats[0]  # Return the first one in case of ties
+            detected_threat = max_threats[0]  # Return the first one in case of ties
+            logging.info(f"Keyword detection found threat type: {detected_threat}")
+            return detected_threat
         
         # If no keywords match, use a simplified zero-shot approach
         # Analyze content for threat indicators
@@ -119,9 +177,12 @@ def detect_threat(content):
         if max_indicator_score > 0:
             # Get all threats with max score
             max_indicator_threats = [threat for threat, score in indicator_scores.items() if score == max_indicator_score]
-            return max_indicator_threats[0]
+            detected_threat = max_indicator_threats[0]
+            logging.info(f"Indicator-based detection found threat type: {detected_threat}")
+            return detected_threat
         
         # If still no match, return "Fraud" (most common)
+        logging.info("No specific threat patterns found, defaulting to 'Fraud'")
         return "Fraud"
         
     except Exception as e:
