@@ -29,6 +29,12 @@ class Scan(db.Model):
     severity = db.Column(db.String(32))
     confidence_score = db.Column(db.Float)
     recommendation = db.Column(db.Text)
+    
+    # Additional fields from synthetic dataset
+    description = db.Column(db.Text)
+    ioc = db.Column(db.String(255))  # Indicator of Compromise (e.g., IP, domain, file hash)
+    source = db.Column(db.String(128))  # Source of threat information
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
@@ -36,11 +42,14 @@ class Scan(db.Model):
         return {
             'id': self.id,
             'url': self.url,
-            'content': self.content,
+            'content': self.content[:500] + '...' if self.content and len(self.content) > 500 else self.content,
             'threat_type': self.threat_type,
             'severity': self.severity,
             'confidence_score': self.confidence_score,
             'recommendation': self.recommendation,
+            'description': self.description,
+            'ioc': self.ioc,
+            'source': self.source,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'user_id': self.user_id
         }
