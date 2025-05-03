@@ -4,6 +4,9 @@ import requests
 import logging
 from datetime import datetime
 
+# Sender email address
+DEFAULT_SENDER_EMAIL = 'vinodsajjan2003@gmail.com'
+
 def send_email_with_sendgrid(recipient_email, subject, html_content, attachment_path=None, attachment_name=None):
     """
     Send an email using the SendGrid API directly.
@@ -31,8 +34,8 @@ def send_email_with_sendgrid(recipient_email, subject, html_content, attachment_
             "Content-Type": "application/json"
         }
         
-        # Default sender email
-        from_email = "threetshieldscan@example.com"
+        # Use the default sender email
+        from_email = DEFAULT_SENDER_EMAIL
         
         # Create email data
         data = {

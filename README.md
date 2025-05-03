@@ -56,20 +56,38 @@ If the SentenceTransformer model is not available, the application automatically
   - `scraper.py` - Web content scraping functionality
   - `report.py` - Report generation functionality
 
-## Running the Application
+## Running the Application Locally
 
 1. Install the required dependencies:
    ```
    pip install flask flask-login flask-wtf flask-sqlalchemy flask-mail
-   pip install sentence-transformers torch pandas joblib trafilatura
+   pip install sentence-transformers torch pandas joblib trafilatura requests
    ```
 
-2. Start the application:
+2. Configure the SendGrid API key:
+   - Edit the `local_config.py` file 
+   - Replace `YOUR_SENDGRID_API_KEY_HERE` with your actual SendGrid API key
+   - The sender email is pre-configured as 'vinodsajjan2003@gmail.com'
+
+3. Start the application:
    ```
    python main.py
    ```
 
-3. Access the application in your browser at `http://localhost:5000`
+4. Access the application in your browser at `http://localhost:5000`
+
+### Using the Email Functionality
+
+The application uses SendGrid to send email reports. To make this work in your local environment:
+
+1. Make sure you have a valid SendGrid API key
+2. Update the `local_config.py` file with your API key
+3. When running locally, import this file at the beginning of your script:
+   ```python
+   import local_config
+   ```
+
+This will ensure the environment variables are set correctly for email functionality.
 
 ## Training the Model
 
