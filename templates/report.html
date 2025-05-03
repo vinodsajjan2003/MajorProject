@@ -107,6 +107,51 @@
         </div>
     </div>
     
+    {% if scan.description or scan.ioc or scan.source %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0">Additional Threat Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if scan.description %}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Description</label>
+                            <div class="form-control bg-dark border-secondary" style="min-height: 100px; overflow-y: auto;">
+                                {{ scan.description }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            {% if scan.ioc %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Indicator of Compromise (IoC)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ scan.ioc }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ scan.ioc }}')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if scan.source %}
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Threat Intel Source</label>
+                                <input type="text" class="form-control" value="{{ scan.source }}" readonly>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <div class="row">
         <div class="col-12">
             <div class="card bg-dark">

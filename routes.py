@@ -134,14 +134,18 @@ def scan():
             # Get threat details from the dataset
             threat_details = get_threat_details(threat_type)
             
-            # Create new scan record
+            # Create new scan record with enhanced threat details
             new_scan = Scan(
                 url=url,
-                content=content[:5000],  # Limit content length
+                content=content[:10000],  # Limit content length but allow more text for analysis
                 threat_type=threat_type,
                 severity=threat_details['severity'],
                 confidence_score=threat_details['confidence_score'],
                 recommendation=threat_details['recommendation'],
+                # Additional fields from the synthetic dataset
+                description=threat_details.get('description'),
+                ioc=threat_details.get('ioc'),
+                source=threat_details.get('source'),
                 user_id=current_user.id
             )
             
