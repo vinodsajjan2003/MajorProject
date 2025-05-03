@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, abort
 from flask_login import login_user, logout_user, login_required, current_user
 # Update for newer Werkzeug versions
 from urllib.parse import urlparse
@@ -14,6 +14,17 @@ from utils.auto_scan import process_auto_scan_url, run_auto_scan_for_user
 from datetime import datetime, timedelta
 from flask_mail import Message
 import logging
+from functools import wraps
+
+# Admin access decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.id != 1:  # Assume user with ID 1 is admin
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
 def index():
@@ -371,3 +382,23 @@ def run_all_auto_scans():
         flash(f'Error running all auto-scans: {str(e)}', 'danger')
     
     return redirect(url_for('auto_scans'))
+
+@app.route('/admin/dashboard')
+@login_required
+@admin_required
+def admin_dashboard():
+    """Admin dashboard to view all database details"""
+    # Get all users
+    users = User.query.all()
+    
+    # Get all scans
+    scans = Scan.query.order_by(Scan.created_at.desc()).all()
+    
+    # Get all auto-scan URLs
+    auto_scans = AutoScanURL.query.order_by(AutoScanURL.created_at.desc()).all()
+    
+    return render_template('admin_dashboard.html',
+                          title='Admin Dashboard',
+                          users=users,
+                          scans=scans,
+                          auto_scans=auto_scans)

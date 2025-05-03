@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="display-5 mb-4">Database Admin Dashboard</h1>
+    
+    <!-- Tab navigation -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">
+                <i class="bi bi-people me-2"></i>Users
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="scans-tab" data-bs-toggle="tab" data-bs-target="#scans" type="button" role="tab" aria-controls="scans" aria-selected="false">
+                <i class="bi bi-search me-2"></i>Scans
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="auto-scans-tab" data-bs-toggle="tab" data-bs-target="#auto-scans" type="button" role="tab" aria-controls="auto-scans" aria-selected="false">
+                <i class="bi bi-shield-check me-2"></i>Auto-Scans
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab content -->
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+            <div class="card">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Registered Users</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Created At</th>
+                                    <th>Scans Count</th>
+                                    <th>Auto-Scans Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ user.scans|length }}</td>
+                                    <td>{{ user.auto_scan_urls|length }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scans Tab -->
+        <div class="tab-pane fade" id="scans" role="tabpanel" aria-labelledby="scans-tab">
+            <div class="card">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Scan Records</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>URL</th>
+                                    <th>User</th>
+                                    <th>Threat Type</th>
+                                    <th>Severity</th>
+                                    <th>Confidence</th>
+                                    <th>Created At</th>
+                                    <th>Source</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for scan in scans %}
+                                <tr>
+                                    <td>{{ scan.id }}</td>
+                                    <td class="text-truncate" style="max-width: 200px;">{{ scan.url }}</td>
+                                    <td>{{ scan.user.username }}</td>
+                                    <td>{{ scan.threat_type }}</td>
+                                    <td><span class="badge severity-badge">{{ scan.severity }}</span></td>
+                                    <td>{{ "%.2f"|format(scan.confidence_score) }}</td>
+                                    <td>{{ scan.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ scan.source or 'Manual' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Auto-Scans Tab -->
+        <div class="tab-pane fade" id="auto-scans" role="tabpanel" aria-labelledby="auto-scans-tab">
+            <div class="card">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Auto-Scan Configurations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>URL</th>
+                                    <th>User</th>
+                                    <th>Frequency</th>
+                                    <th>Last Scanned</th>
+                                    <th>Email Notification</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for auto_scan in auto_scans %}
+                                <tr>
+                                    <td>{{ auto_scan.id }}</td>
+                                    <td class="text-truncate" style="max-width: 200px;">{{ auto_scan.url }}</td>
+                                    <td>{{ auto_scan.user.username }}</td>
+                                    <td>{{ auto_scan.scan_frequency }}</td>
+                                    <td>
+                                        {% if auto_scan.last_scanned_at %}
+                                            {{ auto_scan.last_scanned_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if auto_scan.email_notification %}
+                                            <span class="badge bg-success">Enabled</span>
+                                            <br>
+                                            <small>{{ auto_scan.notification_email or auto_scan.user.email }}</small>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Disabled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if auto_scan.active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ auto_scan.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards Row -->
+<div class="container mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-primary);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted">Total Users</h6>
+                            <h2 class="fw-bold mb-0">{{ users|length }}</h2>
+                        </div>
+                        <div class="dashboard-icon text-primary">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-success);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted">Total Scans</h6>
+                            <h2 class="fw-bold mb-0">{{ scans|length }}</h2>
+                        </div>
+                        <div class="dashboard-icon text-success">
+                            <i class="bi bi-search"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-card bg-dark stats-card h-100" style="border-left-color: var(--bs-info);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted">Auto-Scan URLs</h6>
+                            <h2 class="fw-bold mb-0">{{ auto_scans|length }}</h2>
+                        </div>
+                        <div class="dashboard-icon text-info">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add custom classes to severity badges
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.severity-badge').forEach(function(badge) {
+            const severity = badge.textContent.trim().toLowerCase();
+            if (severity === 'high') {
+                badge.classList.add('bg-danger');
+            } else if (severity === 'medium') {
+                badge.classList.add('bg-warning');
+                badge.classList.add('text-dark');
+            } else if (severity === 'low') {
+                badge.classList.add('bg-info');
+            } else {
+                badge.classList.add('bg-secondary');
+            }
+        });
+    });
+</script>
+{% endblock %}
