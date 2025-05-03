@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     scans = db.relationship('Scan', backref='user', lazy=True)
+    auto_scan_urls = db.relationship('AutoScanURL', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -38,6 +39,9 @@ class Scan(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
+    # Link to auto-scan if this scan was generated automatically
+    auto_scan_url_id = db.Column(db.Integer, db.ForeignKey('auto_scan_url.id'), nullable=True)
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -50,6 +54,43 @@ class Scan(db.Model):
             'description': self.description,
             'ioc': self.ioc,
             'source': self.source,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'user_id': self.user_id,
+            'auto_scan_url_id': self.auto_scan_url_id
+        }
+
+class AutoScanURL(db.Model):
+    """URLs that should be automatically scanned on a schedule"""
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(512), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    
+    # Notification settings
+    email_notification = db.Column(db.Boolean, default=True)
+    notification_email = db.Column(db.String(120), nullable=True)
+    
+    # Schedule settings (for future implementation)
+    scan_frequency = db.Column(db.String(20), default='daily')  # daily, weekly, monthly
+    
+    # Tracking
+    last_scanned_at = db.Column(db.DateTime, nullable=True)
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationship with scan results
+    scans = db.relationship('Scan', backref='auto_scan_url', lazy=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'url': self.url,
+            'description': self.description,
+            'email_notification': self.email_notification,
+            'notification_email': self.notification_email,
+            'scan_frequency': self.scan_frequency,
+            'last_scanned_at': self.last_scanned_at.strftime('%Y-%m-%d %H:%M:%S') if self.last_scanned_at else None,
+            'active': self.active,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'user_id': self.user_id
         }

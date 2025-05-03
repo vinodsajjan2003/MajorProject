@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, URL, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, BooleanField, SelectField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, URL, ValidationError, Optional
 from models import User
 
 class LoginForm(FlaskForm):
@@ -28,3 +28,20 @@ class RegisterForm(FlaskForm):
 class URLScanForm(FlaskForm):
     url = StringField('Dark Web URL', validators=[DataRequired()])
     submit = SubmitField('Scan URL')
+
+class AutoScanURLForm(FlaskForm):
+    url = StringField('URL to Monitor', validators=[DataRequired()])
+    description = TextAreaField('Description (optional)', validators=[Optional()])
+    
+    # Notification settings
+    email_notification = BooleanField('Email Notification', default=True)
+    notification_email = StringField('Notification Email', validators=[Optional(), Email()])
+    
+    # Schedule settings
+    scan_frequency = SelectField('Scan Frequency', 
+                               choices=[('daily', 'Daily'), 
+                                        ('weekly', 'Weekly'), 
+                                        ('monthly', 'Monthly')],
+                               default='daily')
+    
+    submit = SubmitField('Save Auto-Scan URL')
