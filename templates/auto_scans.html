@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">Automated URL Scans</h1>
+            <p class="lead">Configure URLs for automatic threat monitoring and detection.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('add_auto_scan') }}" class="btn btn-primary">
+                <i class="fa fa-plus"></i> Add New URL
+            </a>
+            <a href="{{ url_for('run_all_auto_scans') }}" class="btn btn-success">
+                <i class="fa fa-play"></i> Run All
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Monitored URLs</h5>
+        </div>
+        <div class="card-body">
+            {% if auto_scan_urls %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Description</th>
+                                <th>Frequency</th>
+                                <th>Last Scanned</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for auto_scan in auto_scan_urls %}
+                                <tr>
+                                    <td>{{ auto_scan.url }}</td>
+                                    <td>{{ auto_scan.description or 'N/A' }}</td>
+                                    <td>{{ auto_scan.scan_frequency }}</td>
+                                    <td>
+                                        {% if auto_scan.last_scanned_at %}
+                                            {{ auto_scan.last_scanned_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if auto_scan.active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('run_auto_scan', auto_scan_id=auto_scan.id) }}" 
+                                               class="btn btn-sm btn-success" title="Run Scan Now">
+                                                <i class="fa fa-play"></i>
+                                            </a>
+                                            <a href="{{ url_for('edit_auto_scan', auto_scan_id=auto_scan.id) }}" 
+                                               class="btn btn-sm btn-primary" title="Edit">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('toggle_auto_scan', auto_scan_id=auto_scan.id) }}" 
+                                               class="btn btn-sm btn-warning" title="Toggle Status">
+                                                {% if auto_scan.active %}
+                                                    <i class="fa fa-pause"></i>
+                                                {% else %}
+                                                    <i class="fa fa-play"></i>
+                                                {% endif %}
+                                            </a>
+                                            <a href="{{ url_for('delete_auto_scan', auto_scan_id=auto_scan.id) }}" 
+                                               class="btn btn-sm btn-danger" 
+                                               onclick="return confirm('Are you sure you want to delete this auto-scan URL? This action cannot be undone.')" 
+                                               title="Delete">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p>You don't have any URLs configured for automatic scanning yet.</p>
+                    <a href="{{ url_for('add_auto_scan') }}" class="btn btn-primary mt-2">
+                        <i class="fa fa-plus"></i> Add URL for Automatic Scanning
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="card-title mb-0">About Automated URL Scanning</h5>
+        </div>
+        <div class="card-body">
+            <p>The automated URL scanning feature allows you to:</p>
+            <ul>
+                <li>Monitor URLs on a regular schedule without manual intervention</li>
+                <li>Receive email notifications about detected threats</li>
+                <li>Maintain a history of scans for each monitored URL</li>
+                <li>View threat trends and changes over time</li>
+            </ul>
+            <p><strong>Note:</strong> URLs are scanned according to the frequency you specify, and reports are automatically generated.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Add URL for Automatic Scanning</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_auto_scan') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.url.label(class="form-label") }}
+                            {{ form.url(class="form-control", placeholder="Enter URL to monitor") }}
+                            {% if form.url.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.url.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Enter the URL you want to monitor automatically for threats.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3, placeholder="Enter a description (optional)") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Optionally provide a description to help you identify this URL later.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.email_notification(class="form-check-input") }}
+                                {{ form.email_notification.label(class="form-check-label") }}
+                            </div>
+                            <small class="form-text text-muted">
+                                Receive email notifications when threats are detected.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.notification_email.label(class="form-label") }}
+                            {{ form.notification_email(class="form-control", placeholder="Enter email for notifications") }}
+                            {% if form.notification_email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notification_email.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Email address to send notifications to. If left blank, your account email will be used.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.scan_frequency.label(class="form-label") }}
+                            {{ form.scan_frequency(class="form-select") }}
+                            {% if form.scan_frequency.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.scan_frequency.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                How often the URL should be automatically scanned.
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('auto_scans') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
