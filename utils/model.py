@@ -3,19 +3,65 @@ import logging
 import random
 from app import app
 import pandas as pd
-import openpyxl
+import joblib
+import re
 
 # Global variables to hold the data
 synthetic_data = None
-forum_data = None
+trained_model = None
+threat_categories = None
+
+def clean_text(text):
+    """Clean text data for model prediction"""
+    if not isinstance(text, str):
+        return ""
+    
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove HTML tags
+    text = re.sub(r'<.*?>', '', text)
+    
+    # Remove special characters and digits
+    text = re.sub(r'[^\w\s]', ' ', text)
+    text = re.sub(r'\d+', ' ', text)
+    
+    # Remove extra spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
 
 def load_model():
-    """Load data for threat analysis"""
-    global synthetic_data, forum_data
+    """Load trained model and data for threat analysis"""
+    global synthetic_data, trained_model, threat_categories
     
     success = True
     
-    # Load synthetic threat data
+    # Load trained model
+    try:
+        model_path = os.path.join(app.config.get('MODEL_DIR', 'models'), 'threat_model.joblib')
+        categories_path = os.path.join(app.config.get('MODEL_DIR', 'models'), 'threat_categories.joblib')
+        
+        if os.path.exists(model_path) and os.path.exists(categories_path):
+            logging.info(f"Loading trained model from {model_path}")
+            trained_model = joblib.load(model_path)
+            
+            logging.info(f"Loading threat categories from {categories_path}")
+            threat_categories = joblib.load(categories_path)
+            
+            logging.info(f"Model and categories loaded successfully")
+        else:
+            logging.warning(f"Trained model files not found at {model_path}")
+            trained_model = None
+            threat_categories = None
+            success = False
+    except Exception as e:
+        logging.error(f"Error loading trained model: {str(e)}")
+        trained_model = None
+        threat_categories = None
+        success = False
+    
+    # Load synthetic threat data for detailed information
     try:
         if os.path.exists(app.config.get('DATASET_PATH', 'attached_assets/synthetic_cyber_threats_100k.csv')):
             logging.info("Loading synthetic threat data...")
@@ -30,28 +76,12 @@ def load_model():
         synthetic_data = None
         success = False
     
-    # Load forum data from Excel
-    try:
-        excel_path = 'attached_assets/Book1.xlsx'
-        if os.path.exists(excel_path):
-            logging.info("Loading forum data from Excel...")
-            forum_data = pd.read_excel(excel_path)
-            logging.info(f"Loaded {len(forum_data)} forum data records")
-        else:
-            logging.warning("Forum data Excel file not found")
-            forum_data = None
-            success = False
-    except Exception as e:
-        logging.error(f"Error loading forum data: {str(e)}")
-        forum_data = None
-        success = False
-    
     return success
 
 def detect_threat(content):
     """
-    Detect threats by comparing content with forum data from Book1.xlsx
-    and using advanced keyword detection.
+    Detect threats using the trained model from Book1.xlsx dataset.
+    Falls back to keyword-based detection if the model is not available.
     
     Args:
         content (str): The text content to analyze
@@ -59,92 +89,65 @@ def detect_threat(content):
     Returns:
         str: The detected threat type
     """
-    global forum_data
+    global trained_model, threat_categories
     
-    # List of possible threat types from the synthetic dataset
+    # Default threat types if no model is available
     candidate_labels = ["Malware", "Phishing", "Scam", "Carding", "Exploit", "Fraud", 
                         "Hacking Services", "Ransomware", "Trojan", "Spyware", "DDoS", "SQL Injection"]
     
-    # Ensure forum data is loaded
-    if forum_data is None:
+    # Ensure model is loaded
+    if trained_model is None:
         load_model()
     
     try:
-        # First, try to find similar content in the forum data
-        if forum_data is not None:
-            # Convert input content to lowercase for comparison
-            content_lower = content.lower()
-            
-            # Create a dictionary mapping keywords to threat types
-            keyword_mapping = {
-                'malware': 'Malware',
-                'virus': 'Malware',
-                'worm': 'Malware',
-                'trojan': 'Trojan',
-                'spyware': 'Spyware',
-                'ransomware': 'Ransomware',
-                'ransom': 'Ransomware',
-                'encrypt': 'Ransomware',
-                'bitcoin': 'Ransomware',
-                'payment': 'Ransomware',
-                'phish': 'Phishing',
-                'credential': 'Phishing',
-                'password': 'Phishing',
-                'login': 'Phishing',
-                'bank': 'Phishing',
-                'account': 'Phishing',
-                'credit card': 'Carding',
-                'card': 'Carding',
-                'cvv': 'Carding',
-                'hack': 'Hacking Services',
-                'crack': 'Hacking Services',
-                'exploit': 'Exploit',
-                'vulnerability': 'Exploit',
-                'cve': 'Exploit',
-                'sql': 'SQL Injection',
-                'injection': 'SQL Injection',
-                'ddos': 'DDoS',
-                'denial of service': 'DDoS',
-                'botnet': 'DDoS',
-                'scam': 'Scam',
-                'scheme': 'Scam',
-                'fraud': 'Fraud',
-                'fake': 'Fraud'
-            }
-            
-            # Check for forum data matches - check if similar content exists in forum data
-            matches = []
-            
-            # Try to find similar content in the 'Post Content' column
-            if 'Post Content' in forum_data.columns:
-                for idx, row in forum_data.iterrows():
-                    post_content = str(row['Post Content']).lower()
-                    # Check for content similarity
-                    if post_content and (
-                        any(keyword in post_content for keyword in keyword_mapping.keys()) or
-                        any(keyword in content_lower for keyword in keyword_mapping.keys())
-                    ):
-                        # Find the matching threat type from keywords
-                        for keyword, threat in keyword_mapping.items():
-                            if keyword in post_content or keyword in content_lower:
-                                matches.append(threat)
-                                break
-            
-            # If we found matches in the forum data, return the most common match
-            if matches:
-                # Count occurrences of each threat type
-                threat_counts = {}
-                for threat in matches:
-                    threat_counts[threat] = threat_counts.get(threat, 0) + 1
-                
-                # Return the most common threat type
-                most_common_threat = max(threat_counts.items(), key=lambda x: x[1])[0]
-                return most_common_threat
+        # Clean the content for analysis
+        cleaned_content = clean_text(content)
         
-        # If no forum data or no matches found, use keyword detection
+        # Use the trained model for prediction if available
+        if trained_model is not None:
+            logging.info("Using trained model for threat detection")
+            
+            # Get prediction from model
+            predicted_threat = trained_model.predict([cleaned_content])[0]
+            
+            # Get prediction probabilities
+            prediction_probs = trained_model.predict_proba([cleaned_content])[0]
+            max_prob = max(prediction_probs)
+            
+            # Log prediction details
+            logging.info(f"Model predicted threat type: {predicted_threat} with confidence {max_prob:.4f}")
+            
+            # If confidence is too low, fall back to keyword-based detection
+            if max_prob < 0.3:
+                logging.warning(f"Low confidence prediction ({max_prob:.4f}), falling back to keyword detection")
+            else:
+                return predicted_threat
+        else:
+            logging.warning("No trained model available, using keyword-based detection")
+        
+        # Fallback 1: Keyword-based detection using threat categories
+        if threat_categories is not None:
+            logging.info("Using threat categories for keyword-based detection")
+            
+            # Convert content to lowercase for comparison
+            content_lower = cleaned_content.lower()
+            
+            # Check each threat category for keyword matches
+            matched_categories = []
+            for threat_type, keywords in threat_categories.items():
+                # Check if any keywords match
+                if any(keyword in content_lower for keyword in keywords):
+                    matched_categories.append(threat_type)
+            
+            # If we found matches, return the first match
+            if matched_categories:
+                logging.info(f"Detected threat using keywords: {matched_categories[0]}")
+                return matched_categories[0]
+        
+        # Fallback 2: Advanced keyword detection
+        logging.info("Using hardcoded keyword detection")
         content_lower = content.lower()
         
-        # Advanced keyword detection
         if any(kw in content_lower for kw in ['malware', 'virus', 'worm', 'infection']):
             return "Malware"
         elif any(kw in content_lower for kw in ['phish', 'credential', 'password', 'login', 'bank account']):
@@ -169,13 +172,14 @@ def detect_threat(content):
             return "Spyware"
         elif any(kw in content_lower for kw in ['fraud', 'fake', 'counterfeit']):
             return "Fraud"
-        else:
-            # If no keywords match, use a similarity-based approach
-            # For now, return a random threat type as fallback
-            return random.choice(candidate_labels)
+        
+        # Fallback 3: Return "Fraud" as a default threat type (most common in our dataset)
+        logging.warning("No threat detected, using default threat type")
+        return "Fraud"
             
     except Exception as e:
         logging.error(f"Error detecting threat: {str(e)}")
+        logging.exception("Exception details:")
         return "Unknown"
 
 def get_threat_details(threat_type):
