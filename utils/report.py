@@ -225,15 +225,15 @@ def generate_pdf_report(scan):
 
 def send_report_email(scan, recipient_email):
     """
-    Send a threat report via email using SendGrid.
+    Send a threat report via email.
     
     Args:
         scan: The Scan object containing threat details
         recipient_email: The email address to send the report to
     """
     try:
-        # Import the SendGrid email module
-        from utils.sendgrid_email import send_email_with_sendgrid
+        # Import the email module
+        from utils.email_sender import send_email
         
         # Generate PDF report
         pdf_path = generate_pdf_report(scan)
@@ -259,8 +259,8 @@ def send_report_email(scan, recipient_email):
         </html>
         """
         
-        # Send the email using SendGrid
-        success = send_email_with_sendgrid(
+        # Send the email using smtplib
+        success = send_email(
             recipient_email=recipient_email,
             subject=subject,
             html_content=body,
@@ -272,7 +272,7 @@ def send_report_email(scan, recipient_email):
         os.unlink(pdf_path)
         
         if not success:
-            raise Exception("Failed to send email with SendGrid")
+            raise Exception("Failed to send email")
             
     except Exception as e:
         logging.error(f"Error sending report email: {str(e)}")
