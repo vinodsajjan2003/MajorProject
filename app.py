@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -26,6 +27,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the app
 app.config.from_object('config.Config')
+
+# Add utility functions to Jinja2 templates
+app.jinja_env.globals['now'] = datetime.utcnow
 
 # Initialize extensions with app
 db.init_app(app)
