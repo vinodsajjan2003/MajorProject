@@ -2,8 +2,7 @@ import os
 import tempfile
 from fpdf import FPDF
 from datetime import datetime
-from flask_mail import Message
-from app import app, mail
+from app import app
 import logging
 import json
 
@@ -226,13 +225,16 @@ def generate_pdf_report(scan):
 
 def send_report_email(scan, recipient_email):
     """
-    Send a threat report via email.
+    Send a threat report via email using SendGrid.
     
     Args:
         scan: The Scan object containing threat details
         recipient_email: The email address to send the report to
     """
     try:
+        # Import the SendGrid email module
+        from utils.sendgrid_email import send_email_with_sendgrid
+        
         # Generate PDF report
         pdf_path = generate_pdf_report(scan)
         
@@ -257,26 +259,21 @@ def send_report_email(scan, recipient_email):
         </html>
         """
         
-        msg = Message(
+        # Send the email using SendGrid
+        success = send_email_with_sendgrid(
+            recipient_email=recipient_email,
             subject=subject,
-            recipients=[recipient_email],
-            html=body
+            html_content=body,
+            attachment_path=pdf_path,
+            attachment_name=f'threat_report_{scan.id}.pdf'
         )
-        
-        # Attach the PDF report
-        with open(pdf_path, 'rb') as f:
-            msg.attach(
-                filename=f'threat_report_{scan.id}.pdf',
-                content_type='application/pdf',
-                data=f.read()
-            )
-        
-        # Send the email
-        mail.send(msg)
         
         # Delete the temporary PDF file
         os.unlink(pdf_path)
         
+        if not success:
+            raise Exception("Failed to send email with SendGrid")
+            
     except Exception as e:
-        logging.error(f"Error sending email report: {str(e)}")
+        logging.error(f"Error sending report email: {str(e)}")
         raise
