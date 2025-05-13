@@ -7,7 +7,7 @@ from email.mime.application import MIMEApplication
 
 # Email settings
 EMAIL_ADDRESS = 'vinodsajjan2003@gmail.com'
-EMAIL_PASSWORD = 'gkbytkochsnucfnf'
+EMAIL_PASSWORD = 'vwzhjfkbquabfkin'
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
 
