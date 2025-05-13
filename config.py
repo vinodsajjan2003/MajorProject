@@ -26,10 +26,8 @@ class Config:
     CATEGORIES_PATH = os.path.join(MODEL_DIR, 'threat_categories.joblib')
     
     # Tor proxy configuration
-    TOR_PROXY = {
-        'http': 'socks5h://127.0.0.1:9050',
-        'https': 'socks5h://127.0.0.1:9050'
-    }
+    TOR_PROXY_HOST = os.environ.get('TOR_PROXY_HOST', '127.0.0.1')
+    TOR_PROXY_PORT = int(os.environ.get('TOR_PROXY_PORT', 9050))
     
     # Dataset path
     DATASET_PATH = 'data/synthetic_cyber_threats_100k.csv'
