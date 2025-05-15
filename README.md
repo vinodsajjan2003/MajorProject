@@ -75,7 +75,7 @@ If the SentenceTransformer model is not available, the application automatically
 
 The application uses Gmail SMTP to send email reports. The email functionality is already configured with:
 
-- Sender email: vinodsajjan2003@gmail.com
+- Sender email: businessbusinessman97@gmail.com
 - App password: [Already configured in code]
 
 If you need to use a different email account:
