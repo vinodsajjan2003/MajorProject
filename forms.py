@@ -39,7 +39,9 @@ class AutoScanURLForm(FlaskForm):
     
     # Schedule settings
     scan_frequency = SelectField('Scan Frequency', 
-                               choices=[('daily', 'Daily'), 
+                               choices=[('2min', 'Every 2 Minutes'),
+                                        ('hourly', 'Hourly'),
+                                        ('daily', 'Daily'), 
                                         ('weekly', 'Weekly'), 
                                         ('monthly', 'Monthly')],
                                default='daily')

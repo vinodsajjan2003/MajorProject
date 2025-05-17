@@ -6,8 +6,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
 # Email settings
-EMAIL_ADDRESS = 'vinodsajjan2003@gmail.com'
-EMAIL_PASSWORD = 'axpyjrulnqjbpxfg'
+EMAIL_ADDRESS = 'businessbusinessman97@gmail.com'
+EMAIL_PASSWORD = 'qznyzfgskaapqynz'
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
 

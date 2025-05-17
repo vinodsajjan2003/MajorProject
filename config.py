@@ -16,9 +16,9 @@ class Config:
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('vinodsajjan2003@gmail.com')
-    MAIL_PASSWORD = os.environ.get('axpyjrulnqjbpxfg')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    MAIL_USERNAME = 'businessbusinessman97@gmail.com'
+    MAIL_PASSWORD = 'qznyzfgskaapqynz'
+    MAIL_DEFAULT_SENDER = 'businessbusinessman97@gmail.com'
     
     # Model paths
     MODEL_DIR = 'models'
@@ -26,11 +26,13 @@ class Config:
     CATEGORIES_PATH = os.path.join(MODEL_DIR, 'threat_categories.joblib')
     
     # Tor proxy configuration
-    TOR_PROXY_HOST = os.environ.get('TOR_PROXY_HOST', '127.0.0.1')
-    TOR_PROXY_PORT = int(os.environ.get('TOR_PROXY_PORT', 9050))
+    TOR_PROXY = {
+        'http': 'socks5h://127.0.0.1:9050',
+        'https': 'socks5h://127.0.0.1:9050'
+    }
     
     # Dataset path
     DATASET_PATH = 'data/synthetic_cyber_threats_100k.csv'
-    
+
     # User requests throttling
     MAX_SCANS_PER_HOUR = 10
